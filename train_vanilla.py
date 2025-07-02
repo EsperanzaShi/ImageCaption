@@ -1,7 +1,7 @@
 from datasets import load_dataset, Image  # Add this import
 
 # === Configurable Parameters ===
-BATCH_SIZE = 4
+BATCH_SIZE = 32
 NUM_EPOCHS = 20
 LEARNING_RATE = 1e-4
 STEP_SIZE = 5
