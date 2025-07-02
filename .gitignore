@@ -12,3 +12,4 @@ wheels/
 .venv
 .notes
 .wandb
+.knee_data

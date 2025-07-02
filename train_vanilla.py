@@ -34,7 +34,7 @@ clip_model.requires_grad_(False)
 
 
 class MiniQFormer(nn.Module):
-    def __init__(self, vision_width=512, num_query_tokens=32, hidden_dim=512, num_layers=2, num_heads=8):
+    def __init__(self, vision_width=512, num_query_tokens=64, hidden_dim=512, num_layers=2, num_heads=8):
         super().__init__()
         self.query_tokens = nn.Parameter(torch.randn(1, num_query_tokens, hidden_dim))
         encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=num_heads, batch_first=True)
@@ -125,19 +125,21 @@ def train():
             # Get token embeddings of the target captions
             caption_embeddings = gpt2_model.transformer.wte(batch["input_ids"].to(device))
 
-            # Combine visual prompt + caption
+            # Combine visual prompt + caption embeddings
             inputs_embeds = torch.cat([visual_prompt, caption_embeddings], dim=1)
 
-            # Pad the labels accordingly
-            pad_len = visual_prompt.size(1)
-            labels = torch.cat([
-                torch.full((batch["input_ids"].size(0), pad_len), -100, dtype=torch.long).to(device),  # ignore loss on visual prompt
-                batch["input_ids"].to(device)
-            ], dim=1)
+            # Shift labels right so GPT2 predicts the next token
+            labels = batch["input_ids"].to(device)
+
+            # Set loss to ignore visual prompt positions
+            full_labels = labels.clone()
+            prefix_len = visual_prompt.size(1)
+            padding = torch.full((labels.size(0), prefix_len), -100, dtype=torch.long).to(device)
+            full_labels = torch.cat([padding, full_labels], dim=1)
 
             outputs = gpt2_model(
                 inputs_embeds=inputs_embeds,
-                labels=labels
+                labels=full_labels
             )
             loss = outputs["loss"] if isinstance(outputs, dict) else outputs.loss
             loss.backward()
