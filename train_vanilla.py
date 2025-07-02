@@ -1,8 +1,8 @@
 from datasets import load_dataset, Image  # Add this import
 
 # === Configurable Parameters ===
-BATCH_SIZE = 8
-NUM_EPOCHS = 10
+BATCH_SIZE = 4
+NUM_EPOCHS = 20
 LEARNING_RATE = 1e-4
 STEP_SIZE = 5
 LR_GAMMA = 0.5
@@ -20,7 +20,7 @@ from torch.optim.lr_scheduler import StepLR
 warnings.filterwarnings("ignore", message="Passing a tuple of `past_key_values`")
 
 
-full_dataset = load_dataset("nlphuji/flickr30k", split="test[:50%]").cast_column("image", Image())
+full_dataset = load_dataset("nlphuji/flickr30k", split="test").cast_column("image", Image())
 train_size = int(0.8 * len(full_dataset))
 eval_size = len(full_dataset) - train_size
 dataset = full_dataset.train_test_split(train_size=train_size, test_size=eval_size, shuffle=True, seed=42)
@@ -262,10 +262,10 @@ if __name__ == "__main__":
     torch.save({
         'q_former': q_former.state_dict(),
         'gpt2_model': gpt2_model.state_dict()
-    }, "trained_model.pt")
+    }, "trained_model_full_20epoch.pt")
 
     print("Uploading trained model to Weights & Biases...")
     final_model_artifact = wandb.Artifact("final-trained-model", type="model")
-    final_model_artifact.add_file("trained_model.pt")
+    final_model_artifact.add_file("trained_model_full_20epoch.pt")
     wandb.log_artifact(final_model_artifact)
     print("Upload complete.")
